@@ -65,14 +65,14 @@ exports.trainAndPredict = async function (req, res) {
   );
   // Compile the model
   model.compile({
-    optimizer: tf.train.adam(0.06), // Experiment with different learning rates
+    optimizer: tf.train.adam(req.body.learningRate), // Experiment with different learning rates
     loss: "categoricalCrossentropy", // Use categoricalCrossentropy for multi-class classification
     metrics: ["accuracy"], // Include accuracy as a metric for evaluation
   });
 
   // Train the model
   await model.fit(trainingData, outputData, {
-    epochs: 100,
+    epochs: parseInt(req.body.epochs),
   });
 
   // Predict results for testing data
