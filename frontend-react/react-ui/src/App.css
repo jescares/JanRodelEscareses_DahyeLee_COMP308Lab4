@@ -40,3 +40,18 @@
 .read-the-docs {
   color: #888;
 }
+
+.App-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.App-th, .App-td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.App-th {
+  background-color: #f2f2f2;
+}
