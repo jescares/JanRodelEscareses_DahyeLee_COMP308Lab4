@@ -1,10 +1,9 @@
 const tf = require("@tensorflow/tfjs");
 require("@tensorflow/tfjs-node");
-// Load iris training and testing data
 const iris = require("../../iris.json");
 const irisTesting = require("../../iris-testing.json");
 
-exports.trainAndPredict = function (req, res) {
+exports.trainAndPredict = async function (req, res) {
   // Convert/setup our data for TensorFlow.js
 
   // Tensor of features for training data (include only features, not the output)
@@ -31,14 +30,14 @@ exports.trainAndPredict = function (req, res) {
   );
 
   // Tensor of features for testing data
-  const testingData = tf.tensor2d(
-    irisTesting.map((item) => [
-      item.sepal_length,
-      item.sepal_width,
-      item.petal_length,
-      item.petal_width,
-    ])
-  );
+  const testingData = tf.tensor2d([
+    [
+      parseFloat(req.body.sepalLength),
+      parseFloat(req.body.sepalWidth),
+      parseFloat(req.body.petalLength),
+      parseFloat(req.body.petalWidth),
+    ],
+  ]);
 
   // Build neural network using a sequential model
   const model = tf.sequential();
@@ -71,52 +70,33 @@ exports.trainAndPredict = function (req, res) {
     metrics: ["accuracy"], // Include accuracy as a metric for evaluation
   });
 
-  console.log(model.summary());
+  // Train the model
+  await model.fit(trainingData, outputData, {
+    epochs: 100,
+  });
 
-  // Train the model and predict the results for testing data
-  async function run() {
-    const startTime = Date.now();
-    // Train the model
-    await model.fit(trainingData, outputData, {
-      epochs: 100,
-      callbacks: {
-        // List of callbacks to be called during training
-        onEpochEnd: async (epoch, log) => {
-          console.log(`Epoch ${epoch}: lossValue = ${log.loss}`);
-          console.log("Elapsed time:", Date.now() - startTime);
-        },
-      },
-    });
+  // Predict results for testing data
+  const results = model.predict(testingData);
 
-    // Predict results for testing data
-    const results = model.predict(testingData);
+  // Get the values from the tf.Tensor
+  const prediction = await results.argMax(1).data();
 
-    // Get the values from the tf.Tensor
-    results.array().then((array) => {
-      // Assuming array contains the softmax output
-      const predictions = array.map((row) => {
-        const highestProbIndex = row.findIndex(
-          (val) => val === Math.max(...row)
-        );
-        switch (highestProbIndex) {
-          case 0:
-            return "setosa";
-          case 1:
-            return "virginica";
-          case 2:
-            return "versicolor";
-          default:
-            return "Unknown";
-        }
-      });
-
-      // Sending the first three predictions
-      const dataToSend = { predictions: predictions.slice(0, 1) };
-      console.log(dataToSend.predictions);
-      res.status(200).send(dataToSend.predictions);
-    });
+  // Determine the species based on the prediction
+  let species;
+  switch (prediction[0]) {
+    case 0:
+      species = "setosa";
+      break;
+    case 1:
+      species = "virginica";
+      break;
+    case 2:
+      species = "versicolor";
+      break;
+    default:
+      species = "Unknown";
   }
 
-  // Call the run function
-  run();
+  // Sending the prediction
+  res.status(200).send(species);
 };
