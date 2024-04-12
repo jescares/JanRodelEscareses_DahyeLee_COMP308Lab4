@@ -12,7 +12,7 @@ function App() {
     epochs: 100,
     learningRate: 0.01
   });
-  const [predictions, setPredictions] = useState([]);
+  const [prediction, setPrediction] = useState('');
   const [showLoading, setShowLoading] = useState(false);
   const apiUrl = "/api/run";
 
@@ -29,7 +29,7 @@ function App() {
     setShowLoading(true);
     try {
       const response = await axios.post(apiUrl, formData);
-      setPredictions(response.data);
+      setPrediction(response.data);
       setShowLoading(false);
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -135,35 +135,19 @@ function App() {
         </table>
       </form>
 
+      {showLoading && (
+        <Spinner animation="border" role="status">
+          <span className="sr-only">Loading...</span>
+        </Spinner>
+      )}
 
-    {showLoading && (
-      <Spinner animation="border" role="status">
-        <span className="sr-only">Loading...</span>
-      </Spinner>
-    )}
-
-    {predictions.length > 0 && (
-      <div>
-        <h1>Prediction Results</h1>
-        <table className="App-table">
-          <thead>
-            <tr>
-              <th className="App-th">Test 1</th>
-              <th className="App-th">Test 2</th>
-              <th className="App-th">Test 3</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              {predictions.slice(0, 3).map((prediction, index) => (
-                <td key={index} className="App-td">{prediction}</td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    )}
-  </div>
+      {prediction && (
+        <div>
+          <h1>Prediction Result</h1>
+          <p>The predicted species of flower is: {prediction}</p>
+        </div>
+      )}
+    </div>
   );
 }
 
